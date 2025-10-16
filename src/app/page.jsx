@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -13,20 +13,37 @@ import {
   Music,
   Trophy,
   Zap,
+  ArrowUp,
 } from "lucide-react";
 
-// --- FIX #1: Corrected component import paths ---
-// Assuming you have a Button component at src/app/components/ui/button.jsx
-import { Button } from "./components/ui/button"; 
+import { Button } from "./components/ui/button";
 import { EventCard } from "./components/EventCard";
 
-// --- FIX #2: Removed the incorrect image import ---
-// import backgroundImage from "/public/background.png"; // This is not needed
-
 export default function HomePage() {
-  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [showScrollTopButton, setShowScrollTopButton] = useState(false);
 
-  // --- UPDATED: Complete list of events from the PDF ---
+  // ✅ Reliable scroll detection (works even in Next.js SSR)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+      setShowScrollTopButton(scrollPosition > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // check initial position
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ✅ Smooth scroll to top
+  const scrollToTop = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const events = [
     // DAY 1: 17.10.2025
     { name: "TT (MNTC)", club: "MNTC", time: "9:00 AM – 12:00 PM", venue: "MAB LG 33; LH 32,34", day: 1, category: "competition" },
@@ -107,6 +124,7 @@ export default function HomePage() {
     { name: "SOLO SINGER", club: "Music Club", time: "8:00 PM – 10:30 PM", venue: "MAIN STAGE", day: 3, category: "performance" },
   ];
 
+
   const getCategoryIcon = (category) => {
     switch (category) {
       case "tech":
@@ -130,12 +148,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
-      {/* Background Image */}
+      {/* Background */}
       <div
         className="fixed inset-0 z-0"
         style={{
-          // --- FIX #3: Use a direct path string for the background image ---
-          backgroundImage: `url(/background.png)`, 
+          backgroundImage: `url(/background.png)`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
@@ -146,7 +163,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <div className="relative z-10">
-        {/* Header Section */}
+        {/* Header */}
         <motion.div
           className="pt-12 pb-8 px-4 text-center"
           initial={{ opacity: 0, y: -30 }}
@@ -156,9 +173,6 @@ export default function HomePage() {
           <motion.h1
             className="text-5xl md:text-7xl mb-4 bg-gradient-to-r from-[#ff00ff] via-[#00ffff] to-[#ff00ff] bg-clip-text text-transparent"
             style={{ fontFamily: "Orbitron, sans-serif" }}
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5 }}
           >
             AAROHAṆ 2025–26
           </motion.h1>
@@ -166,29 +180,16 @@ export default function HomePage() {
           <motion.h2
             className="text-xl md:text-2xl mb-2 text-[#00ffff]"
             style={{ fontFamily: "Rajdhani, sans-serif" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
           >
             EVENT TIMELINE
           </motion.h2>
 
-          <motion.p
-            className="text-lg text-gray-300 mb-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-          >
+          <motion.p className="text-lg text-gray-300 mb-8">
             National Institute of Technology, Durgapur
           </motion.p>
 
-          {/* Day Filter Buttons */}
-          <motion.div
-            className="flex flex-wrap justify-center gap-4 mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
-          >
+          {/* Day Buttons */}
+          <motion.div className="flex flex-wrap justify-center gap-4 mb-12">
             {[1, 2, 3].map((day) => (
               <Button
                 key={day}
@@ -209,7 +210,7 @@ export default function HomePage() {
         {/* Timeline */}
         <div className="max-w-7xl mx-auto px-4 pb-20">
           <div className="relative">
-            {/* Central Line */}
+            {/* Line */}
             <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-[#ff00ff] via-[#00ffff] to-[#ff00ff] shadow-[0_0_20px_rgba(255,0,255,0.8)]"></div>
 
             {/* Events */}
@@ -223,10 +224,11 @@ export default function HomePage() {
               >
                 {filteredEvents.map((event, index) => (
                   <EventCard
-                    key={`${event.name}-${event.time}-${index}`}
+                    key={`${event.name}-${index}`}
                     event={event}
                     index={index}
                     icon={getCategoryIcon(event.category)}
+                    isAnimated={index >= 2}
                   />
                 ))}
               </motion.div>
@@ -234,7 +236,23 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Scroll-to-Top Button */}
+      <AnimatePresence>
+        {showScrollTopButton && (
+          <motion.button
+            onClick={scrollToTop}
+            className="fixed bottom-8 right-8 w-14 h-14 rounded-full bg-gradient-to-br from-[#ff00ff] to-[#00ffff] text-white flex items-center justify-center shadow-[0_0_25px_rgba(0,255,255,0.8)] z-50 border border-white/40 backdrop-blur-md"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            whileHover={{ scale: 1.1, rotate: 10 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <ArrowUp className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-

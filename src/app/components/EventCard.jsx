@@ -3,18 +3,20 @@
 import { motion } from "framer-motion"; // ✅ Correct import for Next.js
 import { Clock, MapPin } from "lucide-react";
 
-export function EventCard({ event, index, icon }) {
+// --- CHANGE 1: Accept the 'isAnimated' prop ---
+export function EventCard({ event, index, icon, isAnimated }) {
   const isLeft = index % 2 === 0;
 
   return (
+    // --- CHANGE 2: Conditionally apply animation props ---
     <motion.div
       className={`relative flex items-center mb-16 ${
         isLeft ? "md:flex-row" : "md:flex-row-reverse"
       } flex-col`}
-      initial={{ opacity: 0, x: isLeft ? -100 : 100 }}
-      whileInView={{ opacity: 1, x: 0 }}
+      initial={isAnimated ? { opacity: 0, x: isLeft ? -100 : 100 } : {}}
+      whileInView={isAnimated ? { opacity: 1, x: 0 } : {}}
       viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.6, delay: 0.1 }}
+      transition={isAnimated ? { duration: 0.6, delay: 0.1 } : {}}
     >
       {/* Timeline Dot */}
       <motion.div
